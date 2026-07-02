@@ -21,6 +21,7 @@ class MainScreenTest {
             MainScreenContent(
                 notifications = emptyList(),
                 unreviewedCount = 0,
+                hasNotificationAccess = true,
                 onNotificationClick = {}
             )
         }
@@ -46,6 +47,7 @@ class MainScreenTest {
             MainScreenContent(
                 notifications = testNotifications,
                 unreviewedCount = 0,
+                hasNotificationAccess = true,
                 onNotificationClick = {}
             )
         }
@@ -61,6 +63,7 @@ class MainScreenTest {
             MainScreenContent(
                 notifications = emptyList(),
                 unreviewedCount = 3,
+                hasNotificationAccess = true,
                 onNotificationClick = {}
             )
         }
@@ -74,10 +77,40 @@ class MainScreenTest {
             MainScreenContent(
                 notifications = emptyList(),
                 unreviewedCount = 0,
+                hasNotificationAccess = true,
                 onNotificationClick = {}
             )
         }
 
         composeTestRule.onNodeWithText("(0)").assertDoesNotExist()
+    }
+
+    @Test
+    fun showsPermissionBanner_whenAccessDenied() {
+        composeTestRule.setContent {
+            MainScreenContent(
+                notifications = emptyList(),
+                unreviewedCount = 0,
+                hasNotificationAccess = false,
+                onNotificationClick = {}
+            )
+        }
+
+        composeTestRule.onNodeWithText("Notification access required").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Grant access").assertIsDisplayed()
+    }
+
+    @Test
+    fun hidesPermissionBanner_whenAccessGranted() {
+        composeTestRule.setContent {
+            MainScreenContent(
+                notifications = emptyList(),
+                unreviewedCount = 0,
+                hasNotificationAccess = true,
+                onNotificationClick = {}
+            )
+        }
+
+        composeTestRule.onNodeWithText("Notification access required").assertDoesNotExist()
     }
 }
