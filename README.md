@@ -84,10 +84,6 @@ The project follows the **MVVM** pattern with a focused package structure:
 - `ui/`: Compose screens, ViewModels, and theme definition.
 - `MainActivity.kt`: App entry point and manual DI setup.
 
-## Contributing
-
-We follow a strict workflow for all changes. Please refer to [AGENTS.md](AGENTS.md) for detailed instructions on the issue-branch-PR process, especially if you are using AI agents.
-
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
