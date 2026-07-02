@@ -28,6 +28,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -38,10 +39,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.app.NotificationManagerCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import io.github.pablosalgado.silent.vault.data.local.NotificationEntity
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -53,8 +58,17 @@ fun MainScreen(viewModel: MainViewModel) {
     val notifications by viewModel.notifications.collectAsState()
     val unreviewedCount by viewModel.unreviewedCount.collectAsState()
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
 
-    var hasNotificationAccess by remember { mutableStateOf(checkNotificationAccess(context)) }
+    var hasNotificationAccess by remember {
+        mutableStateOf(checkNotificationAccess(context))
+    }
+
+    LaunchedEffect(lifecycleOwner) {
+        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            hasNotificationAccess = checkNotificationAccess(context)
+        }
+    }
 
     MainScreenContent(
         notifications = notifications,
@@ -97,7 +111,7 @@ fun MainScreenContent(
                         }
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface
                 )
             )
@@ -150,7 +164,7 @@ private fun PermissionBanner(context: Context, modifier: Modifier = Modifier) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            horizontalAlignment = Alignment.Start
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
                 text = "Notification access required",
@@ -162,7 +176,8 @@ private fun PermissionBanner(context: Context, modifier: Modifier = Modifier) {
             Text(
                 text = "Silent Vault needs notification access to capture and silence notifications.",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onErrorContainer
+                color = MaterialTheme.colorScheme.onErrorContainer,
+                textAlign = TextAlign.Center
             )
             Spacer(Modifier.height(12.dp))
             Button(
@@ -258,16 +273,18 @@ private fun rememberAppIcon(packageName: String, context: Context): android.grap
     return androidx.compose.runtime.remember(packageName) {
         try {
             val drawable = context.packageManager.getApplicationIcon(packageName)
+            val width = drawable.intrinsicWidth.takeIf { it > 0 } ?: 40
+            val height = drawable.intrinsicHeight.takeIf { it > 0 } ?: 40
             val bitmap = android.graphics.Bitmap.createBitmap(
-                drawable.intrinsicWidth.takeIf { it > 0 } ?: 40,
-                drawable.intrinsicHeight.takeIf { it > 0 } ?: 40,
+                width,
+                height,
                 android.graphics.Bitmap.Config.ARGB_8888
             )
             val canvas = android.graphics.Canvas(bitmap)
             drawable.setBounds(0, 0, canvas.width, canvas.height)
             drawable.draw(canvas)
             bitmap
-        } catch (e: PackageManager.NameNotFoundException) {
+        } catch (_: PackageManager.NameNotFoundException) {
             null
         }
     }
