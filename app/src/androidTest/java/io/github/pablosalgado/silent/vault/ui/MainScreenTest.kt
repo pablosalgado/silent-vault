@@ -2,13 +2,9 @@ package io.github.pablosalgado.silent.vault.ui
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.github.pablosalgado.silent.vault.data.NotificationRepository
-import io.github.pablosalgado.silent.vault.data.local.FakeDao
 import io.github.pablosalgado.silent.vault.data.local.NotificationEntity
-import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -19,18 +15,14 @@ class MainScreenTest {
     @get:Rule
     val composeTestRule = createComposeRule()
 
-    private val testNotifications = MutableStateFlow(emptyList<NotificationEntity>())
-    private val testUnreviewedCount = MutableStateFlow(0)
-
-    private val fakeDao = object : FakeDao() {
-        override fun getAll() = testNotifications
-        override fun getUnreviewedCount() = testUnreviewedCount
-    }
-
     @Test
     fun showsEmptyState_whenNoNotifications() {
         composeTestRule.setContent {
-            MainScreen(MainViewModel(NotificationRepository(fakeDao)))
+            MainScreenContent(
+                notifications = emptyList(),
+                unreviewedCount = 0,
+                onNotificationClick = {}
+            )
         }
 
         composeTestRule.onNodeWithText("No notifications yet").assertIsDisplayed()
@@ -39,7 +31,7 @@ class MainScreenTest {
 
     @Test
     fun showsNotificationList() {
-        testNotifications.value = listOf(
+        val testNotifications = listOf(
             NotificationEntity(
                 id = 1,
                 packageName = "com.test",
@@ -51,7 +43,11 @@ class MainScreenTest {
         )
 
         composeTestRule.setContent {
-            MainScreen(MainViewModel(NotificationRepository(fakeDao)))
+            MainScreenContent(
+                notifications = testNotifications,
+                unreviewedCount = 0,
+                onNotificationClick = {}
+            )
         }
 
         composeTestRule.onNodeWithText("Test App").assertIsDisplayed()
@@ -61,10 +57,12 @@ class MainScreenTest {
 
     @Test
     fun showsUnreviewedCount() {
-        testUnreviewedCount.value = 3
-
         composeTestRule.setContent {
-            MainScreen(MainViewModel(NotificationRepository(fakeDao)))
+            MainScreenContent(
+                notifications = emptyList(),
+                unreviewedCount = 3,
+                onNotificationClick = {}
+            )
         }
 
         composeTestRule.onNodeWithText("(3)").assertIsDisplayed()
@@ -73,7 +71,11 @@ class MainScreenTest {
     @Test
     fun hidesUnreviewedCount_whenZero() {
         composeTestRule.setContent {
-            MainScreen(MainViewModel(NotificationRepository(fakeDao)))
+            MainScreenContent(
+                notifications = emptyList(),
+                unreviewedCount = 0,
+                onNotificationClick = {}
+            )
         }
 
         composeTestRule.onNodeWithText("(0)").assertDoesNotExist()

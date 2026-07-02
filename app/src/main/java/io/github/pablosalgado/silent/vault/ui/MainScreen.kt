@@ -45,9 +45,26 @@ import java.util.Locale
 fun MainScreen(viewModel: MainViewModel) {
     val notifications by viewModel.notifications.collectAsState()
     val unreviewedCount by viewModel.unreviewedCount.collectAsState()
+
+    MainScreenContent(
+        notifications = notifications,
+        unreviewedCount = unreviewedCount,
+        onNotificationClick = { viewModel.markAsReviewed(it) }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MainScreenContent(
+    notifications: List<NotificationEntity>,
+    unreviewedCount: Int,
+    onNotificationClick: (Long) -> Unit,
+    modifier: Modifier = Modifier
+) {
     val context = LocalContext.current
 
     Scaffold(
+        modifier = modifier,
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
@@ -83,7 +100,7 @@ fun MainScreen(viewModel: MainViewModel) {
                     NotificationCard(
                         notification = notification,
                         context = context,
-                        onClick = { viewModel.markAsReviewed(notification.id) },
+                        onClick = { onNotificationClick(notification.id) },
                         modifier = Modifier.animateItem()
                     )
                 }
