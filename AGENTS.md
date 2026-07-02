@@ -46,7 +46,7 @@ io.github.pablosalgado.silent.vault
 - Create a branch: `{type}/#{issue}-short-description` (e.g. `feat/#3-add-encryption`).
 - Use **conventional commits** referencing the issue.
 - Open a **draft PR**, link to the issue, write a summary of what/why/how.
-- **Self-review**: re-read the diff, check edge cases, run checks.
+- **Self-review**: re-read the diff, check edge cases, run `./gradlew build` locally before opening the PR.
 - Mark PR as ready. I **review and leave comments**.
 - **Iterate**: address all PR comments, push fixes, re-request review.
 - All CI checks (build + tests) must pass before merge.
