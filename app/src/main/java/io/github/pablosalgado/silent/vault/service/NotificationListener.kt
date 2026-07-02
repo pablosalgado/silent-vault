@@ -6,6 +6,7 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.pm.ServiceInfo
 import android.os.Build
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
@@ -19,7 +20,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class NotificationListener : NotificationListenerService() {
@@ -39,15 +39,26 @@ class NotificationListener : NotificationListenerService() {
         super.onListenerConnected()
         val db = NotificationDatabase.getInstance(this)
         repository = NotificationRepository(db.notificationDao())
-        startForeground(NOTIFICATION_ID, buildPersistentNotification(0))
+
+        scope.launch {
+            repository.getUnreviewedCount().collect { count ->
+                val notification = buildPersistentNotification(count)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                    startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
+                } else {
+                    startForeground(NOTIFICATION_ID, notification)
+                }
+            }
+        }
         Log.d(TAG, "Listener connected")
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
+        if (sbn.packageName == packageName) return
+
         val entity = buildEntity(sbn)
         scope.launch {
             repository.insert(entity)
-            updatePersistentNotification()
         }
         cancelNotification(sbn.key)
     }
@@ -93,18 +104,10 @@ class NotificationListener : NotificationListenerService() {
         return builder
             .setContentTitle(getString(R.string.app_name))
             .setContentText(body)
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setSmallIcon(R.mipmap.ic_launcher)
             .setContentIntent(pendingIntent)
             .setOngoing(true)
             .build()
-    }
-
-    private fun updatePersistentNotification() {
-        scope.launch {
-            val count = repository.getUnreviewedCount().first()
-            val notification = buildPersistentNotification(count)
-            notificationManager.notify(NOTIFICATION_ID, notification)
-        }
     }
 
     internal fun buildEntity(sbn: StatusBarNotification): NotificationEntity {

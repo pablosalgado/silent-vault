@@ -36,6 +36,9 @@
             <intent-filter>
                 <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter>
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_TYPE"
+                android:value="Silent Vault silences and stores notifications to reduce distractions, providing a persistent notification to show the count of unreviewed items." />
         </service>
     </application>
 
