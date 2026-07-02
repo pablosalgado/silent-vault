@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">Silent Vault</string>
+    <string name="notification_channel_name">Service</string>
+    <string name="notification_active">Capturing notifications</string>
+    <plurals name="notification_unreviewed">
+        <item quantity="one">%d notification saved</item>
+        <item quantity="other">%d notifications saved</item>
+    </plurals>
 </resources>
