@@ -42,7 +42,7 @@ class NotificationListener : NotificationListenerService() {
         scope.cancel()
     }
 
-    private fun buildEntity(sbn: StatusBarNotification): NotificationEntity {
+    internal fun buildEntity(sbn: StatusBarNotification): NotificationEntity {
         val pm = packageManager
         val appName = try {
             val ai = pm.getApplicationInfo(sbn.packageName, 0)
