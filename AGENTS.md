@@ -48,6 +48,6 @@ io.github.pablosalgado.silent.vault
 - Open a **draft PR**, link to the issue, write a summary of what/why/how.
 - **Self-review**: re-read the diff, check edge cases, run `./gradlew build` locally before opening the PR.
 - Mark PR as ready. I **review and leave comments**.
-- **Iterate**: address all PR comments, push fixes, re-request review.
+- **Iterate**: address all PR comments, push fixes, resolve resolved conversations, re-request review.
 - All CI checks (build + tests) must pass before merge.
 - Squash-merge to `main` when approved.
