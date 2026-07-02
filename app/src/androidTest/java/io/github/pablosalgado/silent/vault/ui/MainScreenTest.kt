@@ -21,7 +21,9 @@ class MainScreenTest {
             MainScreenContent(
                 notifications = emptyList(),
                 unreviewedCount = 0,
-                onNotificationClick = {}
+                isPermissionGranted = true,
+                onNotificationClick = {},
+                onGrantPermissionClick = {}
             )
         }
 
@@ -46,7 +48,9 @@ class MainScreenTest {
             MainScreenContent(
                 notifications = testNotifications,
                 unreviewedCount = 0,
-                onNotificationClick = {}
+                isPermissionGranted = true,
+                onNotificationClick = {},
+                onGrantPermissionClick = {}
             )
         }
 
@@ -61,7 +65,9 @@ class MainScreenTest {
             MainScreenContent(
                 notifications = emptyList(),
                 unreviewedCount = 3,
-                onNotificationClick = {}
+                isPermissionGranted = true,
+                onNotificationClick = {},
+                onGrantPermissionClick = {}
             )
         }
 
@@ -74,10 +80,28 @@ class MainScreenTest {
             MainScreenContent(
                 notifications = emptyList(),
                 unreviewedCount = 0,
-                onNotificationClick = {}
+                isPermissionGranted = true,
+                onNotificationClick = {},
+                onGrantPermissionClick = {}
             )
         }
 
         composeTestRule.onNodeWithText("(0)").assertDoesNotExist()
+    }
+
+    @Test
+    fun showsPermissionBanner_whenPermissionNotGranted() {
+        composeTestRule.setContent {
+            MainScreenContent(
+                notifications = emptyList(),
+                unreviewedCount = 0,
+                isPermissionGranted = false,
+                onNotificationClick = {},
+                onGrantPermissionClick = {}
+            )
+        }
+
+        composeTestRule.onNodeWithText("Notification Access Required").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Grant Permission").assertIsDisplayed()
     }
 }
