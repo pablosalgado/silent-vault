@@ -4,10 +4,8 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
-import android.os.Process
-import android.service.notification.StatusBarNotification
+import android.os.Bundle
 import androidx.test.core.app.ApplicationProvider
-import io.github.pablosalgado.silent.vault.R
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
@@ -15,38 +13,33 @@ import org.junit.Test
 
 class NotificationListenerTest {
 
-    private lateinit var listener: NotificationListener
-    private lateinit var notificationManager: NotificationManager
-
     @Before
     fun setUp() {
-        listener = NotificationListener()
         val context = ApplicationProvider.getApplicationContext<Context>()
-        notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val channel = NotificationChannel(CHANNEL_ID, "Test", NotificationManager.IMPORTANCE_DEFAULT)
         notificationManager.createNotificationChannel(channel)
     }
 
     @Test
     fun buildEntity_parsesTitleAndText() {
-        val notification = buildNotification {
+        val extras = buildExtras {
             setContentTitle("Test Title")
             setContentText("Test Text")
         }
-        val sbn = createStatusBarNotification(notification)
-        val entity = listener.buildEntity(sbn)
+        val entity = buildEntity("com.test", "Test App", extras, 1000L)
 
         assertEquals("Test Title", entity.title)
         assertEquals("Test Text", entity.text)
+        assertEquals(1000L, entity.timestamp)
     }
 
     @Test
     fun buildEntity_parsesTitleOnly() {
-        val notification = buildNotification {
+        val extras = buildExtras {
             setContentTitle("Only Title")
         }
-        val sbn = createStatusBarNotification(notification)
-        val entity = listener.buildEntity(sbn)
+        val entity = buildEntity("com.test", "Test", extras, 0L)
 
         assertEquals("Only Title", entity.title)
         assertNull(entity.text)
@@ -54,11 +47,10 @@ class NotificationListenerTest {
 
     @Test
     fun buildEntity_parsesTextOnly() {
-        val notification = buildNotification {
+        val extras = buildExtras {
             setContentText("Only Text")
         }
-        val sbn = createStatusBarNotification(notification)
-        val entity = listener.buildEntity(sbn)
+        val entity = buildEntity("com.test", "Test", extras, 0L)
 
         assertNull(entity.title)
         assertEquals("Only Text", entity.text)
@@ -66,9 +58,8 @@ class NotificationListenerTest {
 
     @Test
     fun buildEntity_handlesNoTitleOrText() {
-        val notification = buildNotification {}
-        val sbn = createStatusBarNotification(notification)
-        val entity = listener.buildEntity(sbn)
+        val extras = buildExtras {}
+        val entity = buildEntity("com.test", "Test", extras, 0L)
 
         assertNull(entity.title)
         assertNull(entity.text)
@@ -76,82 +67,63 @@ class NotificationListenerTest {
 
     @Test
     fun buildEntity_setsPackageName() {
-        val notification = buildNotification {
+        val extras = buildExtras {
             setContentTitle("Title")
         }
-        val context = ApplicationProvider.getApplicationContext<Context>()
-        val sbn = createStatusBarNotification(notification)
-        val entity = listener.buildEntity(sbn)
+        val entity = buildEntity("com.custom.pkg", "Test", extras, 0L)
 
-        assertEquals(context.packageName, entity.packageName)
+        assertEquals("com.custom.pkg", entity.packageName)
+    }
+
+    @Test
+    fun buildEntity_setsAppName() {
+        val extras = buildExtras {
+            setContentTitle("Title")
+        }
+        val entity = buildEntity("com.test", "My App", extras, 0L)
+
+        assertEquals("My App", entity.appName)
     }
 
     @Test
     fun buildEntity_setsTimestamp() {
-        val notification = buildNotification {
+        val extras = buildExtras {
             setContentTitle("Title")
         }
-        val sbn = createStatusBarNotification(notification)
-        val entity = listener.buildEntity(sbn)
+        val entity = buildEntity("com.test", "Test", extras, 5000L)
 
-        assertEquals(sbn.postTime, entity.timestamp)
+        assertEquals(5000L, entity.timestamp)
     }
 
     @Test
-    fun buildEntity_resolvesAppNameFromPackageManager() {
-        val notification = buildNotification {
-            setContentTitle("Title")
-        }
+    fun resolveAppName_returnsLabel_whenPackageFound() {
         val context = ApplicationProvider.getApplicationContext<Context>()
-        val sbn = createStatusBarNotification(notification)
-        val entity = listener.buildEntity(sbn)
+        val appName = resolveAppName(
+            context.packageManager,
+            context.packageName
+        )
 
-        assertEquals(context.getString(R.string.app_name), entity.appName)
+        assertEquals(context.getString(io.github.pablosalgado.silent.vault.R.string.app_name), appName)
     }
 
     @Test
-    fun buildEntity_usesPackageNameAsFallback_whenAppNotFound() {
-        val notification = buildNotification {
-            setContentTitle("Title")
-        }
-        val sbn = StatusBarNotification(
-            "com.nonexistent.app",
-            "com.nonexistent.app",
-            1,
-            null,
-            1000,
-            1000,
-            notification,
-            Process.myUserHandle(),
-            0L
+    fun resolveAppName_returnsPackageName_whenPackageNotFound() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val appName = resolveAppName(
+            context.packageManager,
+            "com.nonexistent.app"
         )
-        val entity = listener.buildEntity(sbn)
 
-        assertEquals("com.nonexistent.app", entity.appName)
+        assertEquals("com.nonexistent.app", appName)
     }
 
     @Suppress("DEPRECATION")
-    private fun buildNotification(builder: Notification.Builder.() -> Unit): Notification {
+    private fun buildExtras(builder: Notification.Builder.() -> Unit): Bundle {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val b = Notification.Builder(context)
         b.setChannelId(CHANNEL_ID)
         b.apply(builder)
-        return b.build()
-    }
-
-    private fun createStatusBarNotification(notification: Notification): StatusBarNotification {
-        val context = ApplicationProvider.getApplicationContext<Context>()
-        return StatusBarNotification(
-            context.packageName,
-            context.packageName,
-            1,
-            null,
-            Process.myUid(),
-            Process.myPid(),
-            notification,
-            Process.myUserHandle(),
-            System.currentTimeMillis()
-        )
+        return b.build().extras
     }
 
     companion object {

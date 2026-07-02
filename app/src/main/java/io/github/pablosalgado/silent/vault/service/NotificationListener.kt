@@ -44,25 +44,37 @@ class NotificationListener : NotificationListenerService() {
 
     internal fun buildEntity(sbn: StatusBarNotification): NotificationEntity {
         val pm = packageManager
-        val appName = try {
-            val ai = pm.getApplicationInfo(sbn.packageName, 0)
-            pm.getApplicationLabel(ai).toString()
-        } catch (e: PackageManager.NameNotFoundException) {
-            sbn.packageName
-        }
-        val extras = sbn.notification.extras
-        val title = extras.getCharSequence(android.app.Notification.EXTRA_TITLE)?.toString()
-        val text = extras.getCharSequence(android.app.Notification.EXTRA_TEXT)?.toString()
-        return NotificationEntity(
-            packageName = sbn.packageName,
-            appName = appName,
-            title = title,
-            text = text,
-            timestamp = sbn.postTime
-        )
+        val appName = resolveAppName(pm, sbn.packageName)
+        return buildEntity(sbn.packageName, appName, sbn.notification.extras, sbn.postTime)
     }
 
     companion object {
         private const val TAG = "NotificationListener"
     }
+}
+
+internal fun resolveAppName(pm: PackageManager, packageName: String): String {
+    return try {
+        val ai = pm.getApplicationInfo(packageName, 0)
+        pm.getApplicationLabel(ai).toString()
+    } catch (e: PackageManager.NameNotFoundException) {
+        packageName
+    }
+}
+
+internal fun buildEntity(
+    packageName: String,
+    appName: String,
+    extras: android.os.Bundle,
+    timestamp: Long
+): NotificationEntity {
+    val title = extras.getCharSequence(android.app.Notification.EXTRA_TITLE)?.toString()
+    val text = extras.getCharSequence(android.app.Notification.EXTRA_TEXT)?.toString()
+    return NotificationEntity(
+        packageName = packageName,
+        appName = appName,
+        title = title,
+        text = text,
+        timestamp = timestamp
+    )
 }
