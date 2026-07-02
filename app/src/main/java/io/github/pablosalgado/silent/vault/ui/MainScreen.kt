@@ -39,7 +39,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -63,7 +63,7 @@ fun MainScreen(viewModel: MainViewModel) {
     var isPermissionGranted by remember {
         mutableStateOf(
             NotificationManagerCompat.getEnabledListenerPackages(context)
-                .contains(context.packageName)
+                .contains(context.packageName),
         )
     }
 
@@ -114,7 +114,7 @@ fun MainScreenContent(
                         }
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface
                 )
             )
@@ -251,8 +251,7 @@ private fun NotificationCard(
 
 @Composable
 private fun AppIcon(packageName: String, context: Context, modifier: Modifier) {
-    val bitmap = rememberAppIcon(packageName, context)
-    if (bitmap != null) {
+    rememberAppIcon(packageName, context)?.let { bitmap ->
         Icon(
             painter = BitmapPainter(bitmap.asImageBitmap()),
             contentDescription = null,
@@ -266,16 +265,18 @@ private fun rememberAppIcon(packageName: String, context: Context): android.grap
     return androidx.compose.runtime.remember(packageName) {
         try {
             val drawable = context.packageManager.getApplicationIcon(packageName)
+            val width = drawable.intrinsicWidth.takeIf { it > 0 } ?: 40
+            val height = drawable.intrinsicHeight.takeIf { it > 0 } ?: 40
             val bitmap = android.graphics.Bitmap.createBitmap(
-                drawable.intrinsicWidth.takeIf { it > 0 } ?: 40,
-                drawable.intrinsicHeight.takeIf { it > 0 } ?: 40,
+                width,
+                height,
                 android.graphics.Bitmap.Config.ARGB_8888
             )
             val canvas = android.graphics.Canvas(bitmap)
             drawable.setBounds(0, 0, canvas.width, canvas.height)
             drawable.draw(canvas)
             bitmap
-        } catch (e: PackageManager.NameNotFoundException) {
+        } catch (_: PackageManager.NameNotFoundException) {
             null
         }
     }
