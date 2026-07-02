@@ -37,6 +37,7 @@ io.github.pablosalgado.silent.vault
 - **GitHub CLI**: all GitHub operations (issues, PRs, merges) use `gh`.
 - **Issues**: create a GitHub issue from discussion before implementing.
 - **No `build.gradle.kts` changes** without permission or clear dependency need.
+- **Commit authorship**: use `GIT_AUTHOR_NAME` and `GIT_AUTHOR_EMAIL` to identify yourself (e.g., `OpenCode <opencode@silent-vault.dev>`). Include a `Co-authored-by:` trailer when the human makes the commit.
 - **Be concise**: direct answers, no preamble.
 
 ## Workflow (Issue → Branch → PR → Review)
